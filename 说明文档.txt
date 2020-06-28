@@ -1,0 +1,50 @@
+main_sample: 
+初始样本采集，利用拉丁超立方采样获得初始样本集，结果保存为txt文件
+需要数据：高保真度、低保真度的响应、输入参数，频率
+
+------------------------------------------------------------------------------------------------------------------------------
+main_find_wcs: 
+wcs的主函数, 读取初始样本并进行处理，本例中是3.4-3.6GHz， 4.8-4.9GHz，对应频点为第4-6，18-19个（从0开始）
+feature为特征维度，本例中为False，
+对数据进行处理
+x_train_H： 高保真度数据集的输入参数  x_train_L： 低保真度数据集的输入参数
+y_train_H： 高保真度数据集的响应  y_train_L： 低保真度数据集的响应
+Y_wcs：初始样本集中的最差情况
+X_train, Y_train = convert_xy_lists_to_arrays([x_train_L, x_train_H], [y_train_L, y_train_H]) 
+将高低保真度数据集联合，其中高保真输入参数标记为1，低保真度输入参数为0
+max_same_iter 找到的wcs为同一值的最大次数
+max_iter           最大迭代次数
+n_fidelity 保真度模型的数量，这里为2
+注：
+在wcs的主函数中，调用global_management，将wlcb、feature、fre_E、d_x、bounds保存为字典，实现跨py文件的数据传递
+格式为：
+import global_management as gol
+gol.set_map("key", value); 调用的时候为： key_value = gol.get_map("key")
+
+------------------------------------------------------------------------------------------------------------------------------
+function_opti.py :
+           opti_function(nind, maxgen, X_train, Y_train, n_fidelity, fullname_temp, feature, wlcb, fre_E, d_x, bounds)
+           nind 遗传算法种群规模
+           maxgen 遗传算法最大进化代数
+            X_train, Y_train，训练的数据
+            n_fidelity 保真度模型的数量
+            fullname_temp 临时文件的位置
+            feature 特征维度 wlcb lcb值  fre_E 频率 d_x 维度 bounds范围   
+
+           Step1： 建立代理模型 variable_model(X_train, Y_train, n_fidelity, fullname_temp)
+	         建立的代理模型保存在fullname_temp路径下，文件名为 nonlin_nf_model.pkl
+           Step2：优化算法初始化以及预测
+                        这里利用了geatpy工具箱中的“增强精英保留的遗传算法模板“ 
+                       在aimFunc中， x为决策变量矩阵，利用Step1中的模型进行预测
+           Step3：返回最优目标函数值和控制变量值
+          再回到main_find_wcs中进行验证
+
+------------------------------------------------------------------------------------------------------------------------------
+cst_ven_patch(x_pre, N, fillname_coarse/fine , fullname_temp)
+为调用cst的函数
+x_pre 输入参数
+N 输入参数的数量，验证时为1
+fillname_coarse/fine  高低保真度模型文件绝对路径
+fullname_temp 临时文件路径
+
+    
